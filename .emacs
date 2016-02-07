@@ -1,27 +1,32 @@
 (package-initialize)
-
+ 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-enabled-themes (quote (tango-dark)))
+ '(custom-safe-themes
+   (quote
+    ("b04425cc726711a6c91e8ebc20cf5a3927160681941e06bc7900a5a5bfe1a77f" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" default)))
  '(inferior-R-program-name "c:\\Program Files\\R\\R-3.2.2\\bin\\x64\\Rterm.exe")
  '(package-selected-packages
    (quote
     (smex ido-completing-read+ ido-ubiquitous virtualenvwrapper virtualenv jedi ess elpy ein))))
-(custom-set-faces
+;; (
+ ;;custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- )
+ ;;)
 
 
 (require 'ess-site)
 (setq ess-use-auto-complete 'script-only)
 
-(cua-mode 1)
+(require 'workgroups2)
+;(cua-mode 1)
 
 (menu-bar-mode -1)
 (tool-bar-mode -1)
@@ -37,6 +42,16 @@
 
 (setq inhibit-startup-message t
       inhibit-startup-echo-area-message t)
+
+(setq sml/theme 'powerline) ;smart-mode-line
+(sml/setup)
+
+(require 'undo-tree) 
+(global-undo-tree-mode)
+
+
+
+
 
 (setq ess-eval-visibly-p nil)
 (ess-toggle-underscore nil)
@@ -59,10 +74,21 @@
 ;(setq ipython-command "C:\Users\sc_arola\AppData\local\Continuum\Anaconda2\Scripts\ipython") ; discard this line Ipython is already in your PATH
 ;(require 'ipython)
 
-(require 'python)
-(elpy-enable)
-(elpy-use-ipython)
+(eval-after-load "company"
+ '(progn
+    (add-to-list 'company-backends 'company-anaconda)))
+(add-hook 'after-init-hook 'global-company-mode)
 
+(require 'python)
+;(elpy-enable)
+;(elpy-use-ipython)
+(setq python-shell-interpreter "/home/edwold/anaconda2/bin/ipython")
+(add-hook 'python-mode-hook 'anaconda-mode)
+(add-hook 'python-mode-hook 'eldoc-mode)
+
+(defun my-python-mode-hook () 
+  (linum-mode 1)) 
+(add-hook 'python-mode-hook 'my-python-mode-hook) 
 ;(setq jedi:server-args '("--virtual-env" "C:\Users\sc_arola\AppData\Local\Continuum\Anaconda2\Lib\site-packages"))
 
 ;(setq python-shell-interpreter "C:\Users\sc_arola\AppData\local\Continuum\Anaconda2\python.exe" python-shell-interpreter-args "-i C:\Users\sc_arola\AppData\local\Continuum\Anaconda2\Scripts\ipython-script.py")
@@ -70,6 +96,8 @@
 (add-hook 'python-mode-hook 'jedi:setup)
 (setq jedi:complete-on-dot t) 
 
+(setq jedi:server-args
+      '("--sys-path" "~/anaconda2/pkgs/" ))
 
 (require 'auto-complete)
 (require 'auto-complete-config)
@@ -107,3 +135,15 @@
         (e (if mark-active (max (point) (mark)) (point-max))))
     (shell-command-on-region b e
      "python -mjson.tool" (current-buffer) t)))
+
+
+
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+
+(setq wg-prefix-key (kbd "C-c z"))
+(workgroups-mode 1)
