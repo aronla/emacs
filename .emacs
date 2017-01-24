@@ -4,11 +4,11 @@
 ; list the repositories containing them
 (setq package-archives '(("elpa" . "http://tromey.com/elpa/")
                          ("gnu" . "http://elpa.gnu.org/packages/")
+			 ("melpa" . "http://melpa.org/packages/")
                          ("marmalade" . "http://marmalade-repo.org/packages/")))
 
 ; activate all the packages (in particular autoloads)
 (package-initialize)
-
 ; fetch the list of packages available 
 (unless package-archive-contents
   (package-refresh-contents))
@@ -18,10 +18,20 @@
   (unless (package-installed-p package)
     (package-install package)))
 
+(setq auto-save-file-name-transforms
+          `((".*" "/Users/aron/Documents/auto-save/" t))) 
 
+
+(when (memq window-system '(mac ns))
+  (exec-path-from-shell-initialize))
 
 (package-initialize)
- 
+
+(add-hook 'ibuffer-mode-hook
+	  '(lambda ()
+	     (ibuffer-auto-mode 1)
+	     (ibuffer-switch-to-saved-filter-groups "yaml")))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -30,8 +40,25 @@
  '(custom-enabled-themes (quote (tango-dark)))
  '(custom-safe-themes
    (quote
-    ("b04425cc726711a6c91e8ebc20cf5a3927160681941e06bc7900a5a5bfe1a77f" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" default)))
- '(inferior-R-program-name "c:\\Program Files\\R\\R-3.2.2\\bin\\x64\\Rterm.exe")
+    ("84d2f9eeb3f82d619ca4bfffe5f157282f4779732f48a5ac1484d94d5ff5b279" default)))
+ '(ibuffer-saved-filter-groups (quote (("curentsetup" ("yaml" (used-mode . yaml-mode))))))
+ '(ibuffer-saved-filters
+   (quote
+    (("gnus"
+      ((or
+	(mode . message-mode)
+	(mode . mail-mode)
+	(mode . gnus-group-mode)
+	(mode . gnus-summary-mode)
+	(mode . gnus-article-mode))))
+     ("programming"
+      ((or
+	(mode . emacs-lisp-mode)
+	(mode . cperl-mode)
+	(mode . c-mode)
+	(mode . java-mode)
+	(mode . idl-mode)
+	(mode . lisp-mode)))))))
  '(package-selected-packages
    (quote
     (smex ido-completing-read+ ido-ubiquitous virtualenvwrapper virtualenv jedi ess elpy ein))))
@@ -43,19 +70,22 @@
  ;; If there is more than one, they won't work right.
  ;;)
 
-
+(setq inferior-R-program-name "/usr/local/bin/R")
 (require 'ess-site)
 (setq ess-use-auto-complete 'script-only)
-
+(require 'transpose-frame)
 (require 'workgroups2)
 ;(cua-mode 1)
 
+(setq ns-pop-up-frames nil) ; to open in same emacs fram in OS X
 (menu-bar-mode -1)
 (tool-bar-mode -1)
 (scroll-bar-mode -1)
 (delete-selection-mode 1)
 (windmove-default-keybindings 'meta)
 
+(delete-selection-mode 1)
+(transient-mark-mode 1)
 (ido-mode 1)
 (setq ido-everywhere t)
 (setq ido-enable-flex-matching t)
@@ -71,9 +101,14 @@
 (require 'undo-tree) 
 (global-undo-tree-mode)
 
+(require 'ibuffer)
+(global-set-key (kbd "C-x C-b") 'ibuffer-other-window)
+
+(setq ibuffer-default-sorting-mode 'major-mode)
 
 
-
+(when (fboundp 'winner-mode)
+      (winner-mode 1))
 
 (setq ess-eval-visibly-p nil)
 (ess-toggle-underscore nil)
@@ -91,6 +126,8 @@
 
 (global-set-key (kbd "C-x C-g") 'find-file-at-point)
 
+(global-set-key [home] 'move-beginning-of-line)
+(global-set-key [end] 'move-end-of-line)
 
 
 ;(setq ipython-command "C:\Users\sc_arola\AppData\local\Continuum\Anaconda2\Scripts\ipython") ; discard this line Ipython is already in your PATH
@@ -102,9 +139,13 @@
 (add-hook 'after-init-hook 'global-company-mode)
 
 (require 'python)
+
+(setq python-shell-interpreter "/usr/local/bin/python3"
+      python-shell-interpreter-args "-m IPython --simple-prompt -i")
+
 ;(elpy-enable)
 ;(elpy-use-ipython)
-(setq python-shell-interpreter "/home/edwold/anaconda2/bin/ipython")
+;; (setq python-shell-interpreter "/home/edwold/anaconda2/bin/ipython")
 (add-hook 'python-mode-hook 'anaconda-mode)
 (add-hook 'python-mode-hook 'eldoc-mode)
 
@@ -118,8 +159,8 @@
 (add-hook 'python-mode-hook 'jedi:setup)
 (setq jedi:complete-on-dot t) 
 
-(setq jedi:server-args
-      '("--sys-path" "~/anaconda2/pkgs/" ))
+;; (setq jedi:server-args
+;;       '("--sys-path" "~/anaconda2/pkgs/" ))
 
 (require 'auto-complete)
 (require 'auto-complete-config)
@@ -149,6 +190,22 @@
 (global-set-key [C-delete] 'kill-whitespace)
 
 
+(defadvice kill-region (before slick-cut activate compile)
+  "When called interactively with no active region, kill a single line instead."
+  (interactive
+   (if mark-active
+       (list (region-beginning) (region-end))
+     (list (line-beginning-position) (line-beginning-position 2)))))
+
+(defadvice kill-ring-save (before slick-copy activate compile)
+  "When called interactively with no active region, copy a single line instead."
+  (interactive
+   (if mark-active
+       (list (region-beginning) (region-end))
+     (message "Copied line")
+     (list (line-beginning-position) (line-beginning-position 2)))))
+
+
 
 ;;; JSON
 (defun beautify-json ()
@@ -159,13 +216,12 @@
      "python -mjson.tool" (current-buffer) t)))
 
 
-
+; (setq wg-prefix-key (kbd "C-c z"))
+(workgroups-mode 1)
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
-
-(setq wg-prefix-key (kbd "C-c z"))
-(workgroups-mode 1)
+(put 'dired-find-alternate-file 'disabled nil)
